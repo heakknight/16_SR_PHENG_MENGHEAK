@@ -2,6 +2,11 @@
 Step 6 : Terminal chat interface for the RAG application.
 """
 
+import utils.net
+import utils.clients
+import utils.http_session
+import utils.transport
+import utils.session
 from app.pipeline import answer_question
 
 def main():

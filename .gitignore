@@ -3,6 +3,6 @@ venv/
 __pycache__/
 *.pyc
 chroma_db/
-.env
-.vscode/
 .idea/
+config.bat
+node_modules
