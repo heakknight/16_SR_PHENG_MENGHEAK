@@ -1,172 +1,149 @@
 # Baseline RAG Document Chat
 
-A local Retrieval-Augmented Generation (RAG) application built with Python, Ollama, and ChromaDB. The application retrieves relevant information from local documents and uses a local language model to generate grounded answers with source citations.
+A simple local Retrieval-Augmented Generation (RAG) application built with
+Python, Ollama, and ChromaDB.
 
----
+The application reads local documents, splits them into chunks, creates
+embeddings, stores them in ChromaDB, retrieves relevant chunks for a question,
+and uses a local LLM to generate an answer based on the retrieved information.
 
 ## Technology Stack
 
-* **Language:** Python 3.11+
-* **Package Manager:** Poetry
-* **LLM Provider:** Ollama (local server)
-* **Embedding Model:** `nomic-embed-text` (via Ollama)
-* **Generation Model:** `llama3.2:3b` (via Ollama)
-* **Vector Database:** ChromaDB (persistent mode)
-* **Document Processing:** `pypdf` and built-in Python file I/O
-
----
+- Python 3.11
+- Poetry
+- Ollama
+- ChromaDB
+- `nomic-embed-text` - embedding model
+- `llama3.2:3b` - generation model
 
 ## Project Structure
 
 ```text
 16_SR_PHENG_MENGHEAK/
 ├── app/
-│   ├── __init__.py
-│   ├── config.py             # Central application configuration and prompts
-│   ├── ingestion.py          # Step 1: Loads documents (.txt, .md, .pdf) from data/
-│   ├── chunking.py           # Step 2: Fixed-size text chunker with overlap
-│   ├── embeddings.py         # Step 3: Embeds chunks and queries via Ollama
-│   ├── vector_store.py       # Step 3: Indexes chunk vectors into ChromaDB
-│   ├── demo_vector_check.py  # Step 4: Standalone test script for vector search
-│   ├── retriever.py          # Step 5: Queries ChromaDB and returns top chunks
-│   ├── generator.py          # Step 5: Constructs prompt and generates grounded answer
-│   ├── pipeline.py           # Step 5: End-to-end RAG workflow facade
-│   └── main.py               # Step 6: Terminal interactive chat loop
-├── data/                     # Source documents
+│   ├── config.py
+│   ├── ingestion.py
+│   ├── chunking.py
+│   ├── embeddings.py
+│   ├── vector_store.py
+│   ├── demo_vector_check.py
+│   ├── retriever.py
+│   ├── generator.py
+│   ├── pipeline.py
+│   └── main.py
+├── data/
 │   ├── python_development_guide.txt
 │   ├── rag_application.txt
 │   └── rest_api_guide.txt
-├── chroma_db/                # Persistent ChromaDB storage directory
-├── test_log.md               # Step 7: Complete evaluation test log (5 questions)
-├── reflection.md             # Step 8: Written project reflection
+├── chroma_db/
+├── test_log.md
+├── reflection.md
 ├── .gitignore
 ├── pyproject.toml
 ├── poetry.lock
 └── README.md
 ```
 
----
-
-## Project Components
-
-Each module in `app/` has a single, well-defined responsibility:
-
-1. **`app/config.py`**: Centralizes all configuration variables, including model names, data directories, chunking parameters, retrieval top-k, and system prompts.
-2. **`app/ingestion.py`**: Reads raw text, Markdown, and PDF documents from the `data/` directory and returns filename-text pairs.
-3. **`app/chunking.py`**: Splits continuous document texts into uniform chunks using a sliding window.
-4. **`app/embeddings.py`**: Provides unified embedding functions (`embed_texts` and `embed_query`) via Ollama's `nomic-embed-text` model.
-5. **`app/vector_store.py`**: Manages ChromaDB persistent collection initialization and builds the document vector index.
-6. **`app/demo_vector_check.py`**: Standalone testing script that takes a user query, embeds it, queries ChromaDB, and displays the top-3 matching chunks with metadata.
-7. **`app/retriever.py`**: Embeds incoming queries, retrieves the top `TOP_K` relevant chunks from ChromaDB, and packages them with distance and metadata.
-8. **`app/generator.py`**: Formats retrieved context chunks into a grounded prompt and queries `llama3.2:3b` with strict anti-hallucination instructions.
-9. **`app/pipeline.py`**: Connects the retriever and generator into a single callable function: `answer_question(question: str) -> str`.
-10. **`app/main.py`**: Terminal-based chat interface that runs an interactive Q&A loop until the user types `exit`.
-
----
-
 ## Prerequisites
 
-Before running the project, ensure the following are installed and running:
+Before running the application, install:
 
-1. **Python 3.11** or newer
-2. **Poetry** package manager
-3. **Ollama** installed and running on your local machine (`http://localhost:11434`)
+- Python 3.11 or newer
+- Poetry
+- Ollama
 
----
+Ollama must be running on the local machine.
 
-## Installation & Environment Setup
+## Installation
 
-1. Clone or open the repository folder:
-   ```powershell
-   cd 16_SR_PHENG_MENGHEAK
-   ```
+Install the project dependencies:
 
-2. Install Python dependencies using Poetry:
-   ```powershell
-   poetry install
-   ```
+```powershell
+poetry install
+```
 
-3. Ensure Ollama is running and pull the required models:
-   ```powershell
-   ollama pull llama3.2:3b
-   ollama pull nomic-embed-text
-   ```
+Pull the required Ollama models:
 
-4. Verify installed models:
-   ```powershell
-   ollama list
-   ```
+```powershell
+ollama pull llama3.2:3b
+ollama pull nomic-embed-text
+```
 
----
+Check that the models are installed:
+
+```powershell
+ollama list
+```
 
 ## Configuration
 
-All application hyperparameters are defined in `app/config.py`:
+The main settings are stored in `app/config.py`.
 
-| Parameter | Value | Description |
-| :--- | :--- | :--- |
-| `EMBED_MODEL` | `"nomic-embed-text"` | Local embedding model used for documents and queries |
-| `LLM_MODEL` | `"llama3.2:3b"` | Local language model used for grounded answer generation |
-| `DATA_DIR` | `"data"` | Folder containing source documents |
-| `CHROMA_DB_DIR` | `"chroma_db"` | Directory for ChromaDB persistent database files |
-| `COLLECTION_NAME` | `"documents"` | Name of the ChromaDB collection |
-| `CHUNK_SIZE` | `500` | Chunk size in characters |
-| `CHUNK_OVERLAP` | `100` | Overlap between consecutive chunks in characters |
-| `TOP_K` | `3` | Number of relevant chunks retrieved per query |
+```python
+EMBED_MODEL = "nomic-embed-text"
+LLM_MODEL = "llama3.2:3b"
 
----
+DATA_DIR = "data"
+CHROMA_DB_DIR = "chroma_db"
+COLLECTION_NAME = "documents"
 
-## Chunking Strategy & Rationale
+CHUNK_SIZE = 500
+CHUNK_OVERLAP = 100
+TOP_K = 3
+```
 
-### Strategy Used
-**Fixed-size character chunking with sliding-window overlap** (`chunk_size=500`, `overlap=100`).
+## Source Documents
 
-### Why This Strategy Was Chosen
-1. **Context Predictability:** Breaking documents into 500-character segments ensures consistent vector representation sizes that fit comfortably within the embedding window of `nomic-embed-text`.
-2. **Boundary Information Preservation:** A 100-character overlap (20% of chunk size) ensures that sentences, code snippets, or key concepts that lie on chunk boundaries are not abruptly split or lost during similarity search.
-3. **Simplicity and Reliability:** It operates cleanly on plain text and technical documentation without introducing heavy parsing dependencies or risking parser failures.
+The project uses three text documents:
 
----
+- `python_development_guide.txt`
+- `rag_application.txt`
+- `rest_api_guide.txt`
 
-## Building the ChromaDB Vector Index
+They are stored in the `data/` directory.
 
-Because `chroma_db/` is excluded from version control via `.gitignore`, the vector index must be built before starting the chat application.
+## Chunking Strategy
 
-Run the indexing script:
+I used fixed-size character chunking with overlap.
+
+- Chunk size: 500 characters
+- Overlap: 100 characters
+
+I chose this method because it is simple and easy to understand for a
+baseline RAG application. The overlap also helps keep information that may
+be close to the boundary between two chunks.
+
+## Build the Vector Store
+
+Before running the chat application, build the ChromaDB index:
+
 ```powershell
 poetry run python -m app.vector_store
 ```
 
-Expected output:
-```text
-Indexed 20 chunks from 'data/' into Chroma at 'chroma_db/'
-```
+This loads the documents, creates chunks, generates embeddings, and stores
+the chunks and embeddings in ChromaDB.
 
----
+## Check the Vector Store
 
-## Standalone Vector Store Verification
-
-To test that ChromaDB and the embedding model are working properly without running the LLM generation step:
+The vector store can be tested separately with:
 
 ```powershell
 poetry run python -m app.demo_vector_check
 ```
 
-Enter a test question (e.g. `What is a REST API?`) to see the top 3 retrieved chunks, their sources, and chunk indices.
+Enter a question in the terminal to see the top 3 retrieved chunks.
 
----
+## Run the Chat Application
 
-## Running the Terminal Chat Application
-
-Launch the interactive chat interface:
+Start the RAG chatbot with:
 
 ```powershell
 poetry run python -m app.main
 ```
 
-Type any question grounded in the source documents. Type `exit` to terminate the session.
+Example:
 
-Example session:
 ```text
 RAG Chatbot
 Type 'exit' to quit.
@@ -176,35 +153,42 @@ You: What HTTP method is used to create a new resource?
 Assistant: To create a new resource, the HTTP method POST is commonly used.
 
 You: exit
-Goodbye!
 ```
 
----
+Type `exit` to quit.
 
-## RAG Workflow Overview
+## RAG Workflow
 
 ```text
-Offline Pipeline (Setup):
-  Documents (data/) 
-    → Ingestion (load_documents) 
-    → Chunking (chunk_text: 500 chars, 100 overlap) 
-    → Embedding (embed_texts: nomic-embed-text) 
-    → Storage (ChromaDB persistent collection)
-
-Online Pipeline (Query Time):
-  User Question 
-    → Query Embedding (embed_query) 
-    → Similarity Search (top_k=3 in ChromaDB) 
-    → Prompt Construction (Context + Question + Grounded Instructions) 
-    → LLM Generation (llama3.2:3b) 
-    → Grounded Answer
+Documents
+    ↓
+Ingestion
+    ↓
+Chunking
+    ↓
+Embeddings
+    ↓
+ChromaDB
+    ↓
+Retrieval
+    ↓
+Prompt
+    ↓
+Local LLM
+    ↓
+Answer
 ```
 
----
+## Test Results
 
-## Submission Deliverables
+The application was tested with 5 questions:
 
-1. **Code Files:** Located in `app/` (`config.py`, `ingestion.py`, `chunking.py`, `embeddings.py`, `vector_store.py`, `demo_vector_check.py`, `retriever.py`, `generator.py`, `pipeline.py`, `main.py`).
-2. **Documentation (`README.md`):** Complete setup, architecture, and running instructions.
-3. **Step 7 Test Log (`test_log.md`):** Full record of 5 real terminal evaluation tests (4 in-document, 1 out-of-document) with retrieved chunks and generated answers. See [test_log.md](test_log.md).
-4. **Step 8 Reflection (`reflection.md`):** 150–300 word reflection covering what worked well, difficulties encountered, and a proposal for Advanced RAG improvements (Cross-Encoder Re-ranking). See [reflection.md](reflection.md).
+- 4 questions that could be answered from the documents
+- 1 question that was not covered by the documents
+
+The detailed questions, retrieved chunks, and generated answers are recorded
+in `test_log.md`.
+
+## Reflection
+
+The project reflection is recorded in `reflection.md`.
